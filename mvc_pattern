@@ -1,0 +1,10 @@
+#! /bin/bash
+
+echo "echo project name"
+read projectname
+
+mkdir $projectname #root folder
+cd $projectname
+mkdir model
+mkdir controller
+mkdir views
