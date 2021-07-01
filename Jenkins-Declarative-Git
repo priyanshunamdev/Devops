@@ -1,0 +1,11 @@
+pipeline {
+    agent any
+    stages {
+        stage('Git checkout') {
+            steps {
+                git branch: 'main', credentialsId: 'ncs', url: 'https://github.com/priyanshunamdev/Devops.git'
+            }
+        }
+    
+    }
+}
