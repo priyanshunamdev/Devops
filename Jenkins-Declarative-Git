@@ -3,6 +3,10 @@ pipeline {
     stages {
         stage('Git checkout') {
             steps {
+                echo "Hello world"
+                echo "------ ${name}"
+                echo "end param"
+                echo
                 git branch: 'main', credentialsId: 'ncs', url: 'https://github.com/priyanshunamdev/Devops.git'
             }
         }
