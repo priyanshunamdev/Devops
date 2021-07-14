@@ -1,0 +1,80 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: A launch ec2 via auto region select, AND I used parametes, metadata , mapping, output section here
+Metadata:
+  Instances:
+    Description: Infromation about the Instances
+Parameters:
+  InstanceTypeParameters:
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+      - t2.micro
+      - m1.small
+      - m1.large
+    Description: Enter t2.micro, m1.small, m1.large
+  EnvironmentType:
+    Description: environment type  dev or prod
+    Type: String
+    Default: "Dev"
+    AllowedValues:
+      - prod
+      - Dev
+    ConstraintDescription: must select or specify Prod and Dev environment
+Conditions:
+  CreateProdResources: !Equals
+    - !Ref EnvironmentType
+    - prod
+  CreateDevResources: !Equals
+    - !Ref EnvironmentType
+    - Dev
+Mappings:
+  RegionMap:
+    us-east-1:
+      AMI: ami-0747bdcabd34c712a
+    us-east-2:
+      AMI: ami-0233c2d874b811deb
+    us-west-1:
+      AMI: ami-0ed05376b59b90e46
+    us-west-2:
+      AMI: ami-0dc8f589abe99f538
+Resources:
+  MyProdEc2instance:
+    Type: "AWS::EC2::Instance"
+    Condition: CreateProdResources
+    Properties:
+      InstanceType: !Ref InstanceTypeParameters
+      ImageId: !FindInMap [RegionMap, !Ref "AWS::Region", AMI]         # aws::region is pseudo parameter
+  MyDevEc2instance:
+    Type: "AWS::EC2::Instance"
+    Condition: CreateDevResources
+    Properties:
+      InstanceType: !Ref InstanceTypeParameters
+      ImageId: !FindInMap [RegionMap, !Ref "AWS::Region", AMI]           # !FindInmap is a intrinsic function
+  MyBuckets3:
+    Type: "AWS::S3::Bucket"                                        # it will show details about bucket in output section
+    Condition: CreateProdResources
+  MountPoint:
+    Type: "AWS::EC2::VolumeAttachment"
+    Condition: CreateProdResources
+    Properties:
+      InstanceId: !Ref MyProdEc2instance
+      VolumeId: !Ref NewVolume
+      Device: /dev/sdh
+  NewVolume:
+    Type: "AWS::EC2::Volume"
+    Condition: CreateProdResources
+    Properties:
+      Size: 100
+      AvailabilityZone: !GetAtt            # GetAtt funcion return values for a resource,
+        - MyProdEc2instance
+        - AvailabilityZone
+Outputs:
+  VolumeId :
+    Value: !Ref NewVolume
+  MyStacksRegion:
+    Value: !Ref "AWS::Region"
+  BucketName:
+    Value: !Ref MyBuckets3
+  PublicIP:
+    Value: !GetAtt MyProdEc2instance.PublicIP
+  Description: Newly created server ip address
