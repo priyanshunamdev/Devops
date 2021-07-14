@@ -1,0 +1,30 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: A launch ec2 via auto region select,
+Metadata:
+  Instances:
+    Description: Infromation about the Instances
+Parameters:
+  InstanceTypeParameters:
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+      - t2.micro
+      - m1.small
+      - m1.large
+    Description: Enter t2.micro, m1.small, m1.large
+Mappings:
+  RegionMap:
+    us-east-1:
+      AMI: ami-0747bdcabd34c712a
+    us-east-2:
+      AMI: ami-0233c2d874b811deb
+    us-west-1:
+      AMI: ami-0ed05376b59b90e46
+    us-west-2:
+      AMI: ami-0dc8f589abe99f538
+Resources:
+  Firstec2instance:
+    Type: "AWS::EC2::Instance"
+    Properties:
+      InstanceType: !Ref InstanceTypeParameters
+      ImageId: !FindInMap [RegionMap, !Ref "AWS::Region", AMI]         # aws::region is pseudo parameter

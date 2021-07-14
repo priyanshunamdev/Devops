@@ -1,0 +1,76 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: A launch Instance S3VPC ,public and pvt subnet,
+Parameters:
+  InstanceTypeParameters:
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+      - t2.micro
+      - m1.small
+      - m1.large
+    Description: Enter t2.micro, m1.small, m1.large
+  S3bucketname:
+    Description: Name of the s3 bucket must be in between 3 and 63 characher
+    Type: String
+    ConstraintDescription: this bucket name must be in between 3 and 63 characher in length
+    MinLength: 3
+    MaxLength: 63
+Resources:
+  Myvpc:
+    Type: "AWS::EC2::VPC"
+    Properties:
+      CidrBlock: 172.31.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      InstanceTenancy: default
+      Tags:
+        - Key: Name
+          Value: MYVPCC
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+  VPCGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref Myvpc
+      InternetGatewayId: !Ref InternetGateway
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Myvpc
+      CidrBlock: 172.31.0.0/20
+      MapPublicIpOnLaunch: true
+  MyEC2Instance: #An inline comment
+    Type: "AWS::EC2::Instance"
+    Properties:
+      SubnetId: !Ref PublicSubnet
+      ImageId: "ami-00399ec92321828f5" #Another comment -- This is a Linux AMI
+      InstanceType: !Ref InstanceTypeParameters
+      Tags:
+        - Key: Name
+          Value: EC2-CF
+  PrivateSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Myvpc
+      CidrBlock: 172.31.16.0/20
+      MapPublicIpOnLaunch: false
+  RouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref Myvpc
+  InternetRoute:
+    Type: AWS::EC2::Route
+    DependsOn: VPCGatewayAttachment
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+      RouteTableId: !Ref RouteTable
+  SubnetARouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref RouteTable
+      SubnetId: !Ref PublicSubnet
+  S3bucket:
+    Type: "AWS::S3::Bucket"
+    Properties :
+      BucketName: !Ref S3bucketname
